@@ -100,3 +100,38 @@ create index if not exists idx_qr_submissions_status on qr_submissions (status);
 -- Teacher feedback lives in the existing teacher-only table
 -- (qr_teacher_assessment), not here — keeps the hard grading/assessment
 -- boundary from memory #19 intact even as this new pipeline is added.
+
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- Teacher assessment platform (2026-07-08, modeled on CoGrader's rubric UX
+-- per Aj's reference screenshots) — extends the QR submission pipeline with
+-- structured, per-criterion AI feedback instead of a free-text blob, and
+-- supports text-document submissions (writing assignments) alongside photo
+-- scans (math/worksheet assignments).
+-- ─────────────────────────────────────────────────────────────────────────
+
+alter table qr_submissions add column if not exists text_content text;
+-- Either image_url OR text_content is populated, never neither. image_url
+-- stays required at the DB level for backward compat with the photo-scan
+-- path already built; text-document submissions set image_url to '' and
+-- populate text_content instead (enforced in application code, not a CHECK
+-- constraint, since existing rows already have image_url set).
+
+alter table assignments add column if not exists rubric_criteria jsonb;
+-- Structured rubric, replacing the free-text `rubric` column for new
+-- assignments (rubric text field kept for backward compat / simple cases).
+-- Shape: [{ name, description, weight }], e.g.
+-- [{"name":"Language","description":"Spelling and word choice","weight":1},
+--  {"name":"Voice","description":"...","weight":1}, ...]
+
+alter table qr_submissions add column if not exists structured_feedback jsonb;
+-- Shape: {
+--   overallScore, maxScore,
+--   criteria: [{ name, level, score, maxScore, justificationQuote }],
+--   glow: [string], grow: [string], thinkAboutIt: [string]
+-- }
+-- This is the AI-generated draft. qr_teacher_assessment (teacher-only,
+-- separate table, RLS-locked per memory #19) holds the teacher's edited/
+-- approved version - structured_feedback here is never shown to parents
+-- directly; only the portal API's coarse status computation reads its
+-- existence, matching the existing ai_feedback boundary pattern.

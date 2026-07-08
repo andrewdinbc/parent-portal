@@ -1,4 +1,4 @@
-import { sbSelect, sbInsert, sbDelete } from '../../../lib/supabase'
+import { sbSelect, sbInsert, sbDelete } from '../../../../lib/supabase'
 
 // Teacher-side admin tool: QR ID <-> parent email pairs only. No student
 // names are ever accepted or stored here — see docs/PROJECT_SPECS.md

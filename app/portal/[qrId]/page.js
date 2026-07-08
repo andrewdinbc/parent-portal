@@ -66,6 +66,30 @@ export default function PortalPage() {
               ))
             )}
 
+            {data.assignments && data.assignments.length > 0 && (
+              <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 10, padding: 20, marginTop: 24 }}>
+                <div style={{ fontWeight: 700, color: C.navy, marginBottom: 10 }}>📝 Assignments</div>
+                {data.assignments.map((a) => {
+                  const badge = {
+                    assigned: { text: 'Assigned', color: '#8a7d6e', bg: '#f2ede3' },
+                    completed: { text: 'Completed — awaiting review', color: C.gold, bg: '#fdf3e3' },
+                    marked: { text: 'Marked', color: C.green, bg: '#e8f6ee' },
+                  }[a.status]
+                  return (
+                    <div key={a.id} style={{ padding: '10px 0', borderTop: `1px solid ${C.border}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 600 }}>{a.title}</span>
+                        <span style={{ background: badge.bg, color: badge.color, borderRadius: 12, padding: '3px 10px', fontSize: 12, fontWeight: 700 }}>{badge.text}</span>
+                      </div>
+                      {a.status === 'marked' && a.aiFeedback?.markdown && (
+                        <div style={{ marginTop: 8, fontSize: 13, whiteSpace: 'pre-wrap', color: '#444' }}>{a.aiFeedback.markdown}</div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
             {data.announcements && data.announcements.length > 0 && (
               <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 10, padding: 20, marginTop: 24 }}>
                 <div style={{ fontWeight: 700, color: C.navy, marginBottom: 10 }}>📅 Announcements</div>

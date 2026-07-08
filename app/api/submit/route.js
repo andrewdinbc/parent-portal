@@ -1,5 +1,5 @@
 import { put } from '@vercel/blob'
-import { sbInsert } from '../../../../lib/supabase'
+import { sbInsert } from '../../../lib/supabase'
 
 export async function POST(request) {
   try {

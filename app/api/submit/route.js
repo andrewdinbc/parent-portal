@@ -1,27 +1,31 @@
 import { put } from '@vercel/blob'
-import { sbInsert } from '../../../lib/supabase'
+import { sbInsert } from '../../../../lib/supabase'
 
 export async function POST(request) {
   try {
     const formData = await request.formData()
     const file = formData.get('file')
+    const textContent = formData.get('textContent')
     const qrId = formData.get('qrId')
     const assignmentId = formData.get('assignmentId')
 
-    if (!file || !qrId || !assignmentId) {
-      return Response.json({ error: 'file, qrId, assignmentId required' }, { status: 400 })
+    if ((!file && !textContent) || !qrId || !assignmentId) {
+      return Response.json({ error: 'qrId, assignmentId, and either file or textContent required' }, { status: 400 })
     }
 
-    const blob = await put(`submissions/${qrId}-${assignmentId}-${Date.now()}.jpg`, file, {
-      access: 'public',
-    })
+    let imageUrl = ''
+    if (file) {
+      const blob = await put(`submissions/${qrId}-${assignmentId}-${Date.now()}.jpg`, file, { access: 'public' })
+      imageUrl = blob.url
+    }
 
     const [submission] = await sbInsert('qr_submissions', [{
-      qr_id: qrId, assignment_id: assignmentId, image_url: blob.url, status: 'completed',
+      qr_id: qrId, assignment_id: assignmentId,
+      image_url: imageUrl,
+      text_content: textContent || null,
+      status: 'completed',
     }])
 
-    // Kick off AI marking in the background — best-effort, does not block
-    // the student's confirmation that their submission went through.
     fetch(new URL('/api/mark-submission', request.url).toString(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

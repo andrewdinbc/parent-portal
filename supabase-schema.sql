@@ -61,3 +61,42 @@ alter table qr_teacher_assessment enable row level security;
 -- only the service-role key (server-side only, never sent to the browser)
 -- can read/write this table. That is the actual enforcement mechanism,
 -- not just "the parent route doesn't query it."
+
+-- Assignments + QR-scan submission pipeline (Student Portfolio)
+-- Added 2026-07-08 per Aj's spec: students scan their own QR code on a
+-- worksheet page to submit, AI auto-marks, teacher reviews via a future
+-- assessment platform. This is what backs the Assigned -> Completed ->
+-- Marked status model.
+
+create table if not exists assignments (
+  id uuid primary key default gen_random_uuid(),
+  title text not null,
+  subject text not null check (subject in ('math', 'language_arts')),
+  answer_key jsonb, -- optional: [{questionNumber, answer}], used for AI marking when present
+  rubric text, -- optional: free-text rubric, used for AI marking when answer_key absent
+  created_at timestamptz not null default now()
+);
+
+create table if not exists qr_submissions (
+  id uuid primary key default gen_random_uuid(),
+  qr_id text not null,
+  assignment_id uuid not null references assignments(id) on delete cascade,
+  image_url text not null, -- Vercel Blob URL of the scanned/photographed page
+  status text not null default 'completed' check (status in ('completed', 'marked')),
+  -- 'completed' = submitted, not yet marked. 'marked' = has BOTH ai_feedback
+  -- AND teacher_feedback populated (see qr_teacher_assessment for the
+  -- teacher-only half — ai_feedback lives here since it's not sensitive the
+  -- same way, but is only ever surfaced to parents once status='marked').
+  ai_feedback jsonb,
+  submitted_at timestamptz not null default now(),
+  marked_at timestamptz,
+  unique (qr_id, assignment_id)
+);
+
+create index if not exists idx_qr_submissions_qr on qr_submissions (qr_id);
+create index if not exists idx_qr_submissions_assignment on qr_submissions (assignment_id);
+create index if not exists idx_qr_submissions_status on qr_submissions (status);
+
+-- Teacher feedback lives in the existing teacher-only table
+-- (qr_teacher_assessment), not here — keeps the hard grading/assessment
+-- boundary from memory #19 intact even as this new pipeline is added.

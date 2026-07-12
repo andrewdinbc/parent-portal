@@ -53,6 +53,49 @@ export default function QuizSessionPage() {
     return () => clearInterval(interval)
   }, [stage, sessionId])
 
+  // Can't prevent a student from switching apps/tabs from a webpage - only
+  // detect it and make it loud and obvious, plus log it so the teacher
+  // dashboard can flag which student's device left the quiz.
+  function playAlertBeep() {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext
+      const ctx = new AudioContextClass()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = 'square'
+      osc.frequency.value = 880
+      gain.gain.setValueAtTime(0.4, ctx.currentTime)
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.start()
+      osc.frequency.setValueAtTime(660, ctx.currentTime + 0.15)
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.3)
+      osc.stop(ctx.currentTime + 0.5)
+    } catch { /* audio not available - the flag still logs either way */ }
+  }
+
+  function reportOffQuiz(reason) {
+    playAlertBeep()
+    fetch(`/api/quiz-sessions/${sessionId}/flag`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceToken: deviceToken.current, reason }),
+    }).catch(() => {})
+  }
+
+  useEffect(() => {
+    if (stage !== 'quiz') return
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') reportOffQuiz('tab_hidden')
+    }
+    const onBlur = () => reportOffQuiz('window_blur')
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    window.addEventListener('blur', onBlur)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      window.removeEventListener('blur', onBlur)
+    }
+  }, [stage, sessionId])
+
   async function identify(e) {
     e.preventDefault()
     setError('')
@@ -174,15 +217,28 @@ export default function QuizSessionPage() {
 
   if (stage === 'submitting') return <div style={wrap}><p style={{ color: C.muted }}>Submitting…</p></div>
 
+  function retake() {
+    setAnswers({})
+    setCurrent(0)
+    setResult(null)
+    setStage('quiz')
+    if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {})
+  }
+
   if (stage === 'done') return (
     <div style={{ minHeight: '100vh', fontFamily: 'Georgia, serif', background: C.navy, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 56, marginBottom: 16 }}>🔒</div>
         <h1 style={{ fontSize: 26, marginBottom: 8 }}>Return iPad to teacher</h1>
-        <p style={{ opacity: 0.7 }}>Score: {result?.correct} / {result?.total}</p>
+        <p style={{ opacity: 0.7, marginBottom: 20 }}>Score: {result?.correct} / {result?.total} (attempt {result?.attemptNumber})</p>
+        <button onClick={retake} style={{ padding: '10px 22px', background: C.gold, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
+          Try Again
+        </button>
+        <p style={{ opacity: 0.5, fontSize: 12, marginTop: 12 }}>Your first attempt and your best attempt both stay in your portfolio.</p>
       </div>
     </div>
   )
 
   return null
 }
+

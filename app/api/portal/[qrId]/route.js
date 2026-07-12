@@ -16,7 +16,10 @@ export async function GET(request, { params }) {
     const weeklyData = await sbSelect('qr_student_data', `?qr_id=eq.${encodeURIComponent(qrId)}&select=*&order=week_start.desc&limit=12`)
     const announcements = await sbSelect('qr_announcements', `?or=(qr_id.eq.${encodeURIComponent(qrId)},qr_id.is.null)&select=*&order=date.desc&limit=20`)
 
-    const allAssignments = await sbSelect('assignments', '?select=id,title,subject,created_at&order=created_at.desc')
+    // Archived assignments (per Aj: teacher-triggered, not a hard deadline)
+    // are excluded from what parents/students see, but the data itself is
+    // never deleted - teacher side (assessment-tool) keeps showing everything.
+    const allAssignments = await sbSelect('assignments', '?archived_at=is.null&select=id,title,subject,created_at&order=created_at.desc')
     const submissions = await sbSelect('qr_submissions', `?qr_id=eq.${encodeURIComponent(qrId)}&select=*`)
     const submissionByAssignment = Object.fromEntries(submissions.map(s => [s.assignment_id, s]))
 
@@ -45,3 +48,4 @@ export async function GET(request, { params }) {
     return Response.json({ error: e.message }, { status: 500 })
   }
 }
+

@@ -42,7 +42,7 @@ export async function POST(request) {
       return Response.json({ error: 'qrId and assignmentId required' }, { status: 400 })
     }
 
-    const submitUrl = `https://parent-portal.vercel.app/submit/${encodeURIComponent(qrId)}/${encodeURIComponent(assignmentId)}`
+    const submitUrl = `https://parent-portal-silk.vercel.app/submit/${encodeURIComponent(qrId)}/${encodeURIComponent(assignmentId)}`
     const qrPng = await fetchQrPng(submitUrl)
 
     let pdfDoc
@@ -82,3 +82,4 @@ export async function POST(request) {
     return Response.json({ error: e.message }, { status: 500 })
   }
 }
+

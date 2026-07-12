@@ -67,7 +67,7 @@ export async function POST(request) {
     const outDoc = await PDFDocument.create()
 
     for (const qrId of qrIds) {
-      const submitUrl = `https://parent-portal.vercel.app/submit/${encodeURIComponent(qrId)}/${assignment.id}`
+      const submitUrl = `https://parent-portal-silk.vercel.app/submit/${encodeURIComponent(qrId)}/${assignment.id}`
       const qrPng = await fetchQrPng(submitUrl)
       const qrImage = await outDoc.embedPng(qrPng)
       const qrSize = 60
@@ -99,3 +99,4 @@ export async function POST(request) {
     return Response.json({ error: e.message }, { status: 500 })
   }
 }
+

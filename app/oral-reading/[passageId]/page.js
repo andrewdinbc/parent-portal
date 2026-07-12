@@ -58,11 +58,22 @@ export default function OralReadingPage() {
   async function submit() {
     setSubmitting(true); setError('')
     try {
+      let recordingUrl = null
+      if (audioBlobRef.current) {
+        const uploadForm = new FormData()
+        uploadForm.append('audio', audioBlobRef.current, 'reading.webm')
+        uploadForm.append('qrId', qrId)
+        const uploadRes = await fetch('/api/oral-reading/upload', { method: 'POST', body: uploadForm })
+        const uploadData = await uploadRes.json()
+        if (uploadRes.ok) recordingUrl = uploadData.url
+        // If upload fails, proceed without it rather than block submission -
+        // comprehension scoring shouldn't be lost because of a storage hiccup.
+      }
       const orderedAnswers = questions.map((q, i) => answers[i] || '')
       const res = await fetch('/api/oral-reading/attempts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ qrId, passageId, comprehensionAnswers: orderedAnswers }),
+        body: JSON.stringify({ qrId, passageId, recordingUrl, comprehensionAnswers: orderedAnswers }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
@@ -177,3 +188,4 @@ export default function OralReadingPage() {
     </div>
   )
 }
+

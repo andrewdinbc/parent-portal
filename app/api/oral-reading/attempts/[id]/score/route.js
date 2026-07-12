@@ -1,4 +1,4 @@
-import { sbSelect, sbUpdate } from '../../../../../../lib/supabase'
+import { sbSelect, sbUpdate } from '@/lib/supabase'
 
 // Jerry Johns Basic Reading Inventory level thresholds (from Aj's own
 // reference document): Independent = 99%+ word accuracy AND 90%+
@@ -45,3 +45,4 @@ export async function PATCH(request, { params }) {
     return Response.json({ error: e.message }, { status: 500 })
   }
 }
+

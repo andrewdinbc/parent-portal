@@ -1,4 +1,4 @@
-import { sbSelect } from '../../../../../lib/supabase'
+import { sbSelect } from '@/lib/supabase'
 
 export async function GET() {
   try {
@@ -19,3 +19,4 @@ export async function GET() {
     return Response.json({ error: e.message }, { status: 500 })
   }
 }
+

@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { sbSelect, sbInsert, sbUpsert } from '../../../../lib/supabase'
+import { sbSelect, sbInsert, sbUpsert } from '@/lib/supabase'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -63,3 +63,4 @@ Respond with ONLY valid JSON, no markdown fences, no preamble:
     return Response.json({ error: e.message }, { status: 500 })
   }
 }
+

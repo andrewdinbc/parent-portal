@@ -1,4 +1,4 @@
-import { sbSelect, sbUpsert } from '../../../../lib/supabase'
+import { sbSelect, sbUpsert } from '@/lib/supabase'
 
 const FREQUENCY_DAYS = { daily: 1, weekly: 7, monthly: 30 }
 
@@ -35,3 +35,4 @@ export async function POST(request) {
     return Response.json({ error: e.message }, { status: 500 })
   }
 }
+

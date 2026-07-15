@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { getQuizzes, getRecentSessions, startQuizSession, endQuizSession, getQuizSessionDetail } from '../actions'
+import Link from 'next/link'
+import { getQuizzes, getRecentSessions, startQuizSession, endQuizSession, getQuizSessionDetail, deleteQuiz } from '../actions'
 
 const C = { navy: '#1c3557', gold: '#b57c2a', green: '#1a7a3e', red: '#a33', border: '#e3ddd0', bg: '#f7f5f0', card: '#fff' }
 
@@ -26,6 +27,12 @@ export default function QuizSessionsClient() {
     return () => clearInterval(interval)
   }, [detailId])
 
+  const handleDeleteQuiz = async (quizId) => {
+    if (!confirm('Delete this quiz?')) return
+    await deleteQuiz(quizId)
+    getQuizzes().then(setQuizzes)
+  }
+
   const handleStart = async (quizId) => {
     setStarting(quizId)
     const session = await startQuizSession(quizId)
@@ -42,10 +49,17 @@ export default function QuizSessionsClient() {
 
   return (
     <div>
-      <h2 style={{ fontSize: 16, color: C.navy, margin: '0 0 12px' }}>Your quizzes</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <h2 style={{ fontSize: 16, color: C.navy, margin: 0 }}>Your quizzes</h2>
+        <Link href="/teacher/quizzes/new" style={{
+          background: C.gold, color: '#fff', padding: '8px 16px', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none',
+        }}>
+          + New Quiz
+        </Link>
+      </div>
       {quizzes.length === 0 ? (
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: 20, color: '#888', marginBottom: 30 }}>
-          No quizzes yet. Build one via /api/quizzes (Quiz Maker UI not built yet).
+          No quizzes yet.
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 30 }}>
@@ -58,12 +72,19 @@ export default function QuizSessionsClient() {
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{q.title}</div>
                 <div style={{ fontSize: 12, color: '#999' }}>{q.subject || 'General'} · {q.question_type}</div>
               </div>
-              <button onClick={() => handleStart(q.id)} disabled={starting === q.id} title="Start a live session for this quiz" style={{
-                padding: '8px 16px', background: C.gold, color: '#fff', border: 'none', borderRadius: 6,
-                fontWeight: 600, fontSize: 13, cursor: starting === q.id ? 'not-allowed' : 'pointer', opacity: starting === q.id ? 0.6 : 1,
-              }}>
-                {starting === q.id ? 'Starting…' : 'Start Session'}
-              </button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => handleStart(q.id)} disabled={starting === q.id} title="Start a live session for this quiz" style={{
+                  padding: '8px 16px', background: C.gold, color: '#fff', border: 'none', borderRadius: 6,
+                  fontWeight: 600, fontSize: 13, cursor: starting === q.id ? 'not-allowed' : 'pointer', opacity: starting === q.id ? 0.6 : 1,
+                }}>
+                  {starting === q.id ? 'Starting…' : 'Start Session'}
+                </button>
+                <button onClick={() => handleDeleteQuiz(q.id)} title="Delete this quiz" style={{
+                  padding: '8px 12px', background: 'none', border: `1px solid ${C.border}`, color: '#a33', borderRadius: 6, fontSize: 13, cursor: 'pointer',
+                }}>
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>

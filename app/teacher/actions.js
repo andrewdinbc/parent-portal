@@ -211,3 +211,27 @@ export async function getQuizSessionDetail(sessionId) {
     },
   }
 }
+
+// ── Quiz creation ──
+
+export async function generateQuiz(params) {
+  const base = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'
+  const res = await fetch(`${base}/api/quizzes`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(params),
+  })
+  return res.json()
+}
+
+export async function saveQuiz(save) {
+  const [quiz] = await sbInsert('quizzes', [{
+    title: save.title, subject: save.subject || null,
+    question_type: save.questionType || 'multiple_choice',
+    questions: save.questions, source: save.source || 'topic',
+  }])
+  return quiz
+}
+
+export async function deleteQuiz(id) {
+  await sbDelete('quizzes', `?id=eq.${id}`)
+  return { deleted: id }
+}

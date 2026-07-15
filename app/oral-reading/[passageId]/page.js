@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 
-const C = { navy: '#1c3557', gold: '#b57c2a', border: '#ddd4c2', green: '#2e7d4f', red: '#c0392b' }
+import { S } from '@/lib/studentTheme'
 
 export default function OralReadingPage() {
   const { passageId } = useParams()
@@ -86,24 +86,24 @@ export default function OralReadingPage() {
     }
   }
 
-  if (error && !passage) return <div style={{ padding: 40, fontFamily: 'Georgia, serif', color: C.red }}>{error}</div>
-  if (!passage) return <div style={{ padding: 40, fontFamily: 'Georgia, serif', color: C.navy }}>Loading…</div>
+  if (error && !passage) return <div style={{ padding: 40, fontFamily: "'Segoe UI', sans-serif", color: S.red }}>{error}</div>
+  if (!passage) return <div style={{ padding: 40, fontFamily: "'Segoe UI', sans-serif", color: S.text }}>Loading…</div>
 
   if (stage === 'identify') return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', background: '#faf7f2' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Segoe UI', sans-serif", background: '#faf7f2' }}>
       <div style={{ maxWidth: 420, padding: 32, textAlign: 'center' }}>
-        <h1 style={{ color: C.navy, fontSize: 22, marginBottom: 12 }}>Oral Reading</h1>
+        <h1 style={{ color: S.text, fontSize: 22, marginBottom: 12 }}>Oral Reading</h1>
         <p style={{ color: '#8a7d6e', fontSize: 14, marginBottom: 20 }}>Scan or enter your own portfolio QR code to begin.</p>
         <input
           value={qrId}
           onChange={(e) => setQrId(e.target.value)}
           placeholder="Your QR ID"
-          style={{ width: '100%', padding: 12, border: `1px solid ${C.border}`, borderRadius: 8, fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 16, textAlign: 'center', fontSize: 16 }}
+          style={{ width: '100%', padding: 12, border: `1px solid ${S.border}`, borderRadius: 8, fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 16, textAlign: 'center', fontSize: 16 }}
         />
         <button
           onClick={() => qrId.trim() && setStage('ready')}
           disabled={!qrId.trim()}
-          style={{ width: '100%', padding: 14, background: C.gold, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 15 }}
+          style={{ width: '100%', padding: 14, background: S.purple, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 15 }}
         >
           Continue
         </button>
@@ -112,15 +112,15 @@ export default function OralReadingPage() {
   )
 
   if (stage === 'ready') return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', background: '#faf7f2' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Segoe UI', sans-serif", background: '#faf7f2' }}>
       <div style={{ maxWidth: 420, padding: 32, textAlign: 'center' }}>
-        <h1 style={{ color: C.navy, fontSize: 22, marginBottom: 8 }}>{passage.title}</h1>
+        <h1 style={{ color: S.text, fontSize: 22, marginBottom: 8 }}>{passage.title}</h1>
         <p style={{ color: '#8a7d6e', fontSize: 14, marginBottom: 24 }}>
           Read the passage out loud. Recording starts when you press the button below. When
           you&apos;re done reading, press &quot;I&apos;m Done Reading&quot; — the passage will disappear and
           you&apos;ll answer some questions about it from memory.
         </p>
-        <button onClick={startRecording} style={{ padding: '14px 28px', background: C.gold, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 15 }}>
+        <button onClick={startRecording} style={{ padding: '14px 28px', background: S.purple, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 15 }}>
           🎙️ Start Recording &amp; Reading
         </button>
       </div>
@@ -128,15 +128,15 @@ export default function OralReadingPage() {
   )
 
   if (stage === 'reading') return (
-    <div style={{ minHeight: '100vh', fontFamily: 'Georgia, serif', background: '#fff', padding: 32 }}>
+    <div style={{ minHeight: '100vh', fontFamily: "'Segoe UI', sans-serif", background: '#fff', padding: 32 }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, color: C.red, fontWeight: 700 }}>
-          <span style={{ width: 10, height: 10, borderRadius: '50%', background: C.red, display: 'inline-block' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, color: S.red, fontWeight: 700 }}>
+          <span style={{ width: 10, height: 10, borderRadius: '50%', background: S.red, display: 'inline-block' }} />
           Recording
         </div>
-        <h1 style={{ color: C.navy, fontSize: 22, marginBottom: 20 }}>{passage.title}</h1>
+        <h1 style={{ color: S.text, fontSize: 22, marginBottom: 20 }}>{passage.title}</h1>
         <p style={{ fontSize: 19, lineHeight: 1.8, color: '#2a2a2a', whiteSpace: 'pre-wrap' }}>{passage.text_content}</p>
-        <button onClick={finishReading} style={{ marginTop: 28, width: '100%', padding: 16, background: C.navy, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 16 }}>
+        <button onClick={finishReading} style={{ marginTop: 28, width: '100%', padding: 16, background: S.text, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 16 }}>
           I&apos;m Done Reading
         </button>
       </div>
@@ -146,40 +146,40 @@ export default function OralReadingPage() {
   if (stage === 'comprehension') {
     const q = questions[current]
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', background: '#faf7f2', padding: 20 }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Segoe UI', sans-serif", background: '#faf7f2', padding: 20 }}>
         <div style={{ maxWidth: 500, width: '100%' }}>
           <p style={{ fontSize: 12, color: '#8a7d6e', marginBottom: 8 }}>Question {current + 1} of {questions.length} — answer from memory</p>
-          <h2 style={{ color: C.navy, fontSize: 18, marginBottom: 16 }}>{q.question_text}</h2>
+          <h2 style={{ color: S.text, fontSize: 18, marginBottom: 16 }}>{q.question_text}</h2>
           <textarea
             value={answers[current] || ''}
             onChange={(e) => setAnswers((a) => ({ ...a, [current]: e.target.value }))}
             rows={4}
-            style={{ width: '100%', padding: 12, border: `1px solid ${C.border}`, borderRadius: 8, fontFamily: 'inherit', fontSize: 15, boxSizing: 'border-box', marginBottom: 16 }}
+            style={{ width: '100%', padding: 12, border: `1px solid ${S.border}`, borderRadius: 8, fontFamily: 'inherit', fontSize: 15, boxSizing: 'border-box', marginBottom: 16 }}
           />
           <div style={{ display: 'flex', gap: 10 }}>
             {current > 0 && (
-              <button onClick={() => setCurrent((c) => c - 1)} style={{ padding: '12px 20px', background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => setCurrent((c) => c - 1)} style={{ padding: '12px 20px', background: '#fff', border: `1px solid ${S.border}`, borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit' }}>
                 ← Back
               </button>
             )}
             {current < questions.length - 1 ? (
-              <button onClick={() => setCurrent((c) => c + 1)} style={{ flex: 1, padding: 12, background: C.gold, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
+              <button onClick={() => setCurrent((c) => c + 1)} style={{ flex: 1, padding: 12, background: S.purple, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
                 Next →
               </button>
             ) : (
-              <button onClick={submit} disabled={submitting} style={{ flex: 1, padding: 12, background: C.navy, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
+              <button onClick={submit} disabled={submitting} style={{ flex: 1, padding: 12, background: S.text, color: '#fff', border: 'none', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
                 {submitting ? 'Submitting…' : 'Submit'}
               </button>
             )}
           </div>
-          {error && <div style={{ marginTop: 12, color: C.red, fontSize: 13 }}>{error}</div>}
+          {error && <div style={{ marginTop: 12, color: S.red, fontSize: 13 }}>{error}</div>}
         </div>
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', background: C.navy, color: '#fff' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Segoe UI', sans-serif", background: S.text, color: '#fff' }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
         <h1 style={{ fontSize: 22 }}>All done!</h1>
@@ -188,4 +188,5 @@ export default function OralReadingPage() {
     </div>
   )
 }
+
 

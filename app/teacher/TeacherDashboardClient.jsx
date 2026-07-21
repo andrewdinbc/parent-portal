@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { getAssignmentAnalytics, getSkillAnalytics } from './actions'
+import TeachingSlides from './TeachingSlides'
 
 // Layout modeled on CoGrader's teacher dashboard (left sidebar of
 // assignments + quick actions, main "Grade" action cards, and a "Trends
@@ -46,6 +47,7 @@ function InfoCard({ emoji, title, children }) {
 
 export default function TeacherDashboardClient({ assignments }) {
   const [selectedId, setSelectedId] = useState(assignments[0]?.id || '')
+  const [showSlides, setShowSlides] = useState(false)
   const [analytics, setAnalytics] = useState(null)
   const [skills, setSkills] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -123,6 +125,13 @@ export default function TeacherDashboardClient({ assignments }) {
           >
             {assignments.map((a) => <option key={a.id} value={a.id}>{a.title}</option>)}
           </select>
+          {analytics?.approvedCount > 0 && (
+            <button onClick={() => setShowSlides(true)} style={{
+              padding: '10px 16px', borderRadius: 8, border: 'none', background: C.navy, color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer',
+            }}>
+              🎤 Create Teaching Slides
+            </button>
+          )}
         </div>
 
         {loading ? (
@@ -226,6 +235,15 @@ export default function TeacherDashboardClient({ assignments }) {
           </>
         )}
       </div>
+
+      {showSlides && analytics && (
+        <TeachingSlides
+          assignmentTitle={assignments.find((a) => a.id === selectedId)?.title || 'Assignment'}
+          analytics={analytics}
+          onClose={() => setShowSlides(false)}
+        />
+      )}
     </div>
   )
 }
+

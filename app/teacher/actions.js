@@ -65,6 +65,73 @@ export async function getAssignmentAnalytics(assignmentId) {
   const strengths = [...criteria].sort((a, b) => (b.avgScore / b.maxScore) - (a.avgScore / a.maxScore)).slice(0, 3)
   const areasForGrowth = [...criteria].sort((a, b) => (a.avgScore / a.maxScore) - (b.avgScore / b.maxScore)).slice(0, 3)
 
+  // Intensive support + Next lesson (2026-07-21): the two CoGrader tabs
+  // that had no equivalent anywhere -- built as rule-based derivations of
+  // data already computed above, not a new AI call or new table. A
+  // student is an "intensive support" candidate when EVERY criterion
+  // came back below 50% -- a broad gap, not one fixable skill, which is
+  // the same distinction CoGrader's own UI draws ("no single skill to
+  // target, suggesting a broader gap"). Suggested moves are templated,
+  // not personalized -- CoGrader's own reference screenshots showed the
+  // identical three bullets for two different flagged students, so this
+  // isn't understating what a rule-based v1 can honestly claim.
+  const LOW_THRESHOLD = 0.5
+  const studentProfiles = allAssessments.map((a) => {
+    const feedback = a.assessment.feedback
+    const criteriaScores = (feedback.criteria || []).map((c) => ({ name: c.name, score: c.score, maxScore: c.maxScore, pct: c.maxScore ? c.score / c.maxScore : 0 }))
+    const belowCount = criteriaScores.filter((c) => c.pct < LOW_THRESHOLD).length
+    return {
+      qrId: a.qr_id,
+      overallScore: feedback.overallScore,
+      maxScore: feedback.maxScore,
+      overallPct: feedback.maxScore ? feedback.overallScore / feedback.maxScore : 0,
+      criteriaScores,
+      belowCount,
+      uniformlyLow: criteriaScores.length > 0 && belowCount === criteriaScores.length,
+    }
+  })
+
+  const UNIFORM_LOW_MOVES = [
+    'Schedule a 1:1 check-in this week -- surface what is blocking the work.',
+    'Review the evidence together before assigning group practice.',
+    'Loop in a specialist, mentor, or home support if the same pattern has appeared before.',
+  ]
+  const intensiveCandidates = studentProfiles.filter((s) => s.uniformlyLow)
+  const intensiveSupport = {
+    candidateCount: intensiveCandidates.length,
+    students: intensiveCandidates.map((s) => ({
+      qrId: s.qrId,
+      overallScore: s.overallScore,
+      maxScore: s.maxScore,
+      whyThisStudent: 'Uniformly low across all criteria -- no single skill to target, suggesting a broader gap rather than a specific reteach opportunity.',
+      suggestedMoves: UNIFORM_LOW_MOVES,
+    })),
+  }
+
+  const advancedThreshold = 0.8
+  const advancedCount = studentProfiles.filter((s) => s.overallPct >= advancedThreshold).length
+  const needsSupportCount = studentProfiles.filter((s) => s.overallPct < LOW_THRESHOLD).length
+  const weakestCriterion = areasForGrowth[0]
+  const nextLesson = {
+    advancedLearners: {
+      count: advancedCount,
+      suggestion: advancedCount > 0
+        ? 'Offer an extension task beyond the rubric ceiling -- independent application or peer mentoring for the students already at 80%+.'
+        : 'No students currently at the 80%+ band on this assignment.',
+    },
+    needsSupport: {
+      count: needsSupportCount,
+      suggestion: needsSupportCount > 0
+        ? `Small-group reteach focused on ${weakestCriterion?.name || 'the weakest skill'}${weakestCriterion ? ` -- ${weakestCriterion.studentCount} of ${submissions.length} students need work here` : ''}.`
+        : 'No students currently below 50% on this assignment.',
+    },
+    wholeClass: {
+      suggestion: weakestCriterion
+        ? `Whole-class mini-lesson on ${weakestCriterion.name} before the next assignment.`
+        : 'No clear whole-class gap identified from this assignment yet.',
+    },
+  }
+
   return {
     assignment, submissionCount: submissions.length, approvedCount: allAssessments.length,
     overview: {
@@ -73,6 +140,8 @@ export async function getAssignmentAnalytics(assignmentId) {
       criteria,
     },
     patterns: { strengths, areasForGrowth },
+    intensiveSupport,
+    nextLesson,
   }
 }
 

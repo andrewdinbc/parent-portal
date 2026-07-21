@@ -163,6 +163,51 @@ export default function TeacherDashboardClient({ assignments }) {
           </div>
         )}
 
+        {analytics?.intensiveSupport?.candidateCount > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <InfoCard emoji="🆘" title={`Intensive Support — ${analytics.intensiveSupport.candidateCount} student${analytics.intensiveSupport.candidateCount === 1 ? '' : 's'} may need more than a small group`}>
+              <p style={{ fontSize: 12, color: '#888', margin: '0 0 14px' }}>
+                These students stand apart from the reteach cohort — a small-group session alone is unlikely to be enough. Start with a conversation, then decide what kind of support they need.
+              </p>
+              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                {analytics.intensiveSupport.students.map((s) => (
+                  <div key={s.qrId} style={{ flex: 1, minWidth: 220, background: C.bg, borderRadius: 10, padding: 14 }}>
+                    <div style={{ fontWeight: 700, color: C.navy, fontSize: 13, marginBottom: 2 }}>Student {s.qrId}</div>
+                    <div style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>{s.overallScore} / {s.maxScore}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#888', marginBottom: 4, textTransform: 'uppercase' }}>Why this student</div>
+                    <p style={{ fontSize: 12, color: '#555', margin: '0 0 8px', lineHeight: 1.5 }}>{s.whyThisStudent}</p>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#888', marginBottom: 4, textTransform: 'uppercase' }}>Suggested moves</div>
+                    <ul style={{ margin: 0, paddingLeft: 16, fontSize: 12, color: '#555', lineHeight: 1.6 }}>
+                      {s.suggestedMoves.map((m) => <li key={m}>{m}</li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </InfoCard>
+          </div>
+        )}
+
+        {analytics?.nextLesson && (
+          <div style={{ marginTop: 16 }}>
+            <InfoCard emoji="📅" title="Next Lesson — Plan the follow-up">
+              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.navy, marginBottom: 4 }}>Advanced learners ({analytics.nextLesson.advancedLearners.count})</div>
+                  <p style={{ fontSize: 12, color: '#555', margin: 0, lineHeight: 1.5 }}>{analytics.nextLesson.advancedLearners.suggestion}</p>
+                </div>
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.navy, marginBottom: 4 }}>Learners who need support ({analytics.nextLesson.needsSupport.count})</div>
+                  <p style={{ fontSize: 12, color: '#555', margin: 0, lineHeight: 1.5 }}>{analytics.nextLesson.needsSupport.suggestion}</p>
+                </div>
+                <div style={{ flex: 1, minWidth: 200 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.navy, marginBottom: 4 }}>Whole class</div>
+                  <p style={{ fontSize: 12, color: '#555', margin: 0, lineHeight: 1.5 }}>{analytics.nextLesson.wholeClass.suggestion}</p>
+                </div>
+              </div>
+            </InfoCard>
+          </div>
+        )}
+
         {skills && skills.totalDataPoints > 0 && (
           <>
             <h2 style={{ fontSize: 20, color: C.navy, margin: '40px 0 16px' }}>Across all assignments</h2>

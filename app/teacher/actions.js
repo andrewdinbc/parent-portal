@@ -304,3 +304,83 @@ export async function deleteQuiz(id) {
   await sbDelete('quizzes', `?id=eq.${id}`)
   return { deleted: id }
 }
+
+// ── Student Activity (2026-07-21) ──
+//
+// The MS-Teams-Insights-style gap from the UI mapping doc. Built ONLY
+// from real timestamped data across 3 existing tables -- deliberately
+// NOT a new event-logging table instrumented into every submission path
+// (that was the original plan in the mapping doc, but it's needless
+// write-side risk when enough real read-side data already exists to
+// build this honestly, same reasoning as Intensive Support/Next Lesson).
+//
+// Explicitly NOT included, because there's no honest way to compute them
+// with real data: "on-time submission %" (assignments has no due_date
+// anywhere in the schema -- checked before building this) and
+// "communication activity" (qr_announcements exists but has zero rows
+// and no code writing to it -- see docs/UI_REFERENCE_MAPPING.md). Those
+// would need real new features first, not fabricated numbers here.
+const ACTIVITY_WINDOW_DAYS = 14
+
+export async function getStudentActivity() {
+  const since = new Date(Date.now() - ACTIVITY_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString()
+
+  const [submissions, assessments, oralReadings] = await Promise.all([
+    sbSelect('qr_submissions', `?select=qr_id,submitted_at,marked_at,assignment_id&order=submitted_at.desc`),
+    sbSelect('qr_teacher_assessment', `?select=qr_id,created_at&order=created_at.desc`),
+    sbSelect('oral_reading_attempts', `?select=qr_id,created_at,wcpm&order=created_at.desc`),
+  ])
+
+  const byStudent = {}
+  function touch(qrId) {
+    if (!byStudent[qrId]) byStudent[qrId] = { qrId, events: [], feedbackTurnaroundsHours: [] }
+    return byStudent[qrId]
+  }
+
+  for (const s of submissions) {
+    const entry = touch(s.qr_id)
+    entry.events.push({ type: 'submission', occurredAt: s.submitted_at, label: 'Submitted work' })
+    if (s.marked_at) {
+      entry.events.push({ type: 'marked', occurredAt: s.marked_at, label: 'Feedback marked' })
+      const hours = (new Date(s.marked_at) - new Date(s.submitted_at)) / 3_600_000
+      if (hours >= 0) entry.feedbackTurnaroundsHours.push(hours)
+    }
+  }
+  for (const a of assessments) {
+    touch(a.qr_id).events.push({ type: 'approved', occurredAt: a.created_at, label: 'Feedback approved' })
+  }
+  for (const r of oralReadings) {
+    touch(r.qr_id).events.push({ type: 'oral_reading', occurredAt: r.created_at, label: `Oral reading attempt (${r.wcpm ?? '?'} WCPM)` })
+  }
+
+  const students = Object.values(byStudent).map((s) => {
+    const sortedEvents = s.events.sort((a, b) => new Date(b.occurredAt) - new Date(a.occurredAt))
+    const lastActivityAt = sortedEvents[0]?.occurredAt || null
+    const activeThisWindow = lastActivityAt && lastActivityAt >= since
+    const avgTurnaroundHours = s.feedbackTurnaroundsHours.length
+      ? Math.round((s.feedbackTurnaroundsHours.reduce((a, b) => a + b, 0) / s.feedbackTurnaroundsHours.length) * 10) / 10
+      : null
+    return {
+      qrId: s.qrId,
+      eventCount: sortedEvents.length,
+      lastActivityAt,
+      activeThisWindow,
+      avgTurnaroundHours,
+      timeline: sortedEvents.slice(0, 15),
+    }
+  }).sort((a, b) => new Date(b.lastActivityAt || 0) - new Date(a.lastActivityAt || 0))
+
+  const withTurnaround = students.filter((s) => s.avgTurnaroundHours !== null)
+  const classAvgTurnaroundHours = withTurnaround.length
+    ? Math.round((withTurnaround.reduce((sum, s) => sum + s.avgTurnaroundHours, 0) / withTurnaround.length) * 10) / 10
+    : null
+
+  return {
+    windowDays: ACTIVITY_WINDOW_DAYS,
+    totalStudents: students.length,
+    activeThisWindow: students.filter((s) => s.activeThisWindow).length,
+    classAvgTurnaroundHours,
+    students,
+  }
+}
+

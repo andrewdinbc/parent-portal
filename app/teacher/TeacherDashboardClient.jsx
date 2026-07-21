@@ -113,6 +113,7 @@ export default function TeacherDashboardClient({ assignments }) {
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 40 }}>
           <ActionCard href="/teacher/rubrics" emoji="📖" title="Rubric library" desc="Browse and manage your grading rubrics" />
           <ActionCard href="/teacher/assignments" emoji="🔑" title="My assignments & answer keys" desc="Manage assignments and answer keys" />
+          <ActionCard href="/teacher/activity" emoji="📈" title="Student Activity" desc="Real submission, feedback, and reading activity per student" />
         </div>
 
         <h2 style={{ fontSize: 22, color: C.navy, margin: '0 0 20px' }}>Trends and patterns</h2>

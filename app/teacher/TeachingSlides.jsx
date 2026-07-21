@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { C } from '../../lib/theme'
 
 // Create Teaching Slides (2026-07-21) -- the last real CoGrader-parity
 // gap. Deliberately NOT a .pptx generator: no product in this ecosystem
@@ -12,6 +11,12 @@ import { C } from '../../lib/theme'
 // works with a browser's own print-to-PDF if a downloadable file is
 // wanted. If a real .pptx export is genuinely needed later, that's a
 // separate scoped addition (pptxgenjs or similar), not squeezed in here.
+//
+// parent-portal has no shared lib/theme.js (checked -- only
+// lib/studentTheme.js for the student-facing purple theme); the teacher
+// dashboard defines its own color const inline instead. Matching that
+// convention here rather than assuming a shared file that doesn't exist.
+const C = { navy: '#1c3557', gold: '#b57c2a', green: '#1a7a3e', border: '#e3ddd0', bg: '#f7f5f0', card: '#fff', muted: '#888' }
 
 function Slide({ children }) {
   return (

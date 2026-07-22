@@ -153,11 +153,14 @@ export default function QuizSessionPage() {
     <div style={wrap}>
       <form onSubmit={identify} style={{ background: '#fff', padding: 32, borderRadius: 12, maxWidth: 380, width: '100%', border: `1px solid ${S.border}` }}>
         <h1 style={{ color: S.text, fontSize: 22, marginBottom: 4 }}>{quiz?.title}</h1>
-        <p style={{ color: S.muted, fontSize: 13, marginBottom: 20 }}>Scan or type your own portfolio QR code to begin — not your name.</p>
+        <p style={{ color: S.muted, fontSize: 13, marginBottom: 20 }}>
+          Scan or type your own portfolio QR code to begin. Don&apos;t have one yet? Type your first name and last
+          initial instead (e.g. &quot;Emma S&quot;) so you don&apos;t get mixed up with a classmate.
+        </p>
         <input
           value={qrId}
           onChange={(e) => setQrId(e.target.value)}
-          placeholder="Your QR ID"
+          placeholder="Your QR ID, or First name + last initial"
           autoFocus
           style={{ width: '100%', padding: 14, fontSize: 16, border: `1px solid ${S.border}`, borderRadius: 8, marginBottom: 16, boxSizing: 'border-box' }}
         />
@@ -242,5 +245,6 @@ export default function QuizSessionPage() {
 
   return null
 }
+
 
 

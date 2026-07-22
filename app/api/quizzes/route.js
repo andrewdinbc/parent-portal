@@ -31,7 +31,7 @@ export async function DELETE(request) {
 
 export async function POST(request) {
   try {
-    const { title, subject, source, sourceContent, questionType, numQuestions, instructions, save } = await request.json()
+    const { title, subject, source, sourceContent, sourceUrl, questionType, numQuestions, instructions, save } = await request.json()
 
     // If "save" is provided directly (teacher already reviewed a generated
     // draft), skip generation and just persist it.
@@ -40,6 +40,7 @@ export async function POST(request) {
         title: save.title, subject: save.subject || null,
         question_type: save.questionType || 'multiple_choice',
         questions: save.questions, source: save.source || 'topic',
+        source_url: save.sourceUrl || null,
       }])
       return Response.json({ quiz })
     }
@@ -71,8 +72,9 @@ Respond with ONLY valid JSON, no markdown fences, no preamble:
     const cleaned = text.replace(/```json|```/g, '').trim()
     const parsed = JSON.parse(cleaned)
 
-    return Response.json({ title: parsed.title, questions: parsed.questions })
+    return Response.json({ title: parsed.title, questions: parsed.questions, sourceUrl: sourceUrl || null })
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 })
   }
 }
+

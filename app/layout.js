@@ -1,5 +1,6 @@
 import DevModePanel from "../developer-mode/DevModePanel";
 import Header from "../components/Header";
+import MorpheusChat from "../components/MorpheusChat";
 
 export const metadata = { title:"parent-portal", description:"Secure student work sharing portal for parent-teacher communication with AI-generated summaries." };
 export default function RootLayout({ children }) {
@@ -18,6 +19,7 @@ export default function RootLayout({ children }) {
           audienceLabel="a parent viewing their child's weekly progress, or the teacher managing it"
           mode="personal"
         />
+              <MorpheusChat productName="Student Portfolio and Assignment Tracker" />
       </body>
     </html>
   );

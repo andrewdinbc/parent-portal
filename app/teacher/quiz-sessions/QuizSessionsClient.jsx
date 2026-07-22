@@ -5,12 +5,29 @@ import { getQuizzes, getRecentSessions, startQuizSession, endQuizSession, getQui
 
 const C = { navy: '#1c3557', gold: '#b57c2a', green: '#1a7a3e', red: '#a33', border: '#e3ddd0', bg: '#f7f5f0', card: '#fff' }
 
+// The join link every student in the class scans/visits to reach the
+// check-in screen for a session -- this was the actual missing piece (Aj,
+// 2026-07-22): quiz_sessions/quiz_session_devices already supported one
+// shared session with each student self-identifying by their own personal
+// QR ID once inside, but nothing rendered an actual scannable QR code for
+// the session itself, so a teacher had no way to share it with the whole
+// class at once. Using a plain image-API QR generator rather than adding
+// a new npm dependency -- classroom-scale traffic, no auth needed.
+const SITE_BASE = 'https://parent-portal-silk.vercel.app'
+function sessionJoinUrl(sessionId) {
+  return `${SITE_BASE}/quiz-session/${sessionId}`
+}
+function qrImageUrl(targetUrl, size = 260) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(targetUrl)}`
+}
+
 export default function QuizSessionsClient() {
   const [quizzes, setQuizzes] = useState([])
   const [sessions, setSessions] = useState([])
   const [starting, setStarting] = useState(null)
   const [detail, setDetail] = useState(null)
   const [detailId, setDetailId] = useState(null)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   const loadSessions = () => getRecentSessions().then(setSessions)
 
@@ -45,6 +62,14 @@ export default function QuizSessionsClient() {
     await endQuizSession(sessionId)
     loadSessions()
     if (detailId === sessionId) setDetail((d) => d ? { ...d, session: { ...d.session, status: 'ended' } } : d)
+  }
+
+  const handleCopyLink = async (sessionId) => {
+    try {
+      await navigator.clipboard.writeText(sessionJoinUrl(sessionId))
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch { /* clipboard permission denied -- link is still visible/selectable in the input below */ }
   }
 
   return (
@@ -128,6 +153,33 @@ export default function QuizSessionsClient() {
               </button>
             )}
           </div>
+          {detail.session.status === 'active' && (
+            <div style={{
+              display: 'flex', gap: 16, alignItems: 'center', background: C.bg, border: `1px solid ${C.border}`,
+              borderRadius: 10, padding: 14, marginBottom: 16,
+            }}>
+              <img src={qrImageUrl(sessionJoinUrl(detail.session.id))} alt="Scan to join this quiz session" width={130} height={130}
+                style={{ borderRadius: 6, background: '#fff', border: `1px solid ${C.border}` }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 13, color: C.navy, marginBottom: 4 }}>
+                  Display this for the whole class
+                </div>
+                <div style={{ fontSize: 12, color: '#777', marginBottom: 10, lineHeight: 1.4 }}>
+                  Every student scans the same code, then enters their own portfolio QR ID to check in and get graded individually.
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input readOnly value={sessionJoinUrl(detail.session.id)} onFocus={(e) => e.target.select()}
+                    style={{ flex: 1, minWidth: 0, padding: '8px 10px', fontSize: 12, border: `1px solid ${C.border}`, borderRadius: 6, color: '#555', background: '#fff' }} />
+                  <button onClick={() => handleCopyLink(detail.session.id)} style={{
+                    padding: '8px 14px', background: linkCopied ? C.green : C.navy, color: '#fff', border: 'none',
+                    borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+                  }}>
+                    {linkCopied ? 'Copied!' : 'Copy Link'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 16, marginBottom: 16, fontSize: 13 }}>
             <div><strong>{detail.counts.checkedIn}</strong> checked in</div>
             <div style={{ color: C.green }}><strong>{detail.counts.completed}</strong> completed</div>
@@ -159,3 +211,4 @@ export default function QuizSessionsClient() {
     </div>
   )
 }
+

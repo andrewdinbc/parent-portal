@@ -38,10 +38,44 @@ export async function POST(request) {
     )
     const youtubeChannels = taggedResources.filter((d) => /youtube\.com\/@/.test(d.source_url || ''))
 
+    // Real bug found 2026-07-23 (via the CEO's Quiz Generator bridge,
+    // real test): "water cycle" on a tagged Science channel returned a
+    // "water on the Moon" video as YouTube's #1 "relevance" result within
+    // that channel -- the channel just doesn't have a real water-cycle
+    // video, and results[0] was trusted blindly regardless of whether it
+    // was actually ABOUT the topic. YouTube's per-channel relevance
+    // ranking is not the same as "this video covers this topic" -- it's
+    // "this is the closest match this channel has," which can still be a
+    // bad match. isRelevant() is a lightweight, honest sanity check:
+    // does the video's own title/description actually contain the
+    // topic's meaningful words? Not a real NLP topic-match, but enough to
+    // reject a video that's merely keyword-adjacent (shares "water" but
+    // is about something else entirely).
+    const STOPWORDS = new Set(['the', 'a', 'an', 'of', 'for', 'and', 'or', 'in', 'on', 'to', 'is', 'are', 'with']);
+    function topicWords(t) {
+      return String(t || '').toLowerCase().split(/\W+/).filter((w) => w.length > 2 && !STOPWORDS.has(w));
+    }
+    function isRelevant(video, topic) {
+      const words = topicWords(topic);
+      if (!words.length) return true;
+      const haystack = `${video.title} ${video.description}`.toLowerCase();
+      const hits = words.filter((w) => haystack.includes(w));
+      // Short topics (<=3 meaningful words, e.g. "water cycle") require
+      // ALL words present -- a partial match on a short topic is exactly
+      // the failure mode that let "water on the Moon" through for
+      // "water cycle" (shares only the generic word "water", not the
+      // specific word "cycle"). Longer, more descriptive topics allow
+      // ~70% overlap since minor phrasing differences matter less once
+      // there are more words to anchor on.
+      const required = words.length <= 3 ? words.length : Math.ceil(words.length * 0.7);
+      return hits.length >= required;
+    }
+
     // Step 2: search each tagged channel in turn for a topic-relevant
-    // video, stop at the first real result. A single channel failing
-    // (bad handle resolution, transient API error) skips to the next
-    // rather than failing the whole request.
+    // video, stop at the first result that's ACTUALLY relevant (not just
+    // the first result returned). A single channel failing (bad handle
+    // resolution, transient API error) skips to the next rather than
+    // failing the whole request.
     let video = null
     let usedChannel = null
     for (const ch of youtubeChannels) {
@@ -49,7 +83,8 @@ export async function POST(request) {
         const channelId = await resolveChannelId(ch.source_url)
         if (!channelId) continue
         const results = await searchChannelForTopic(channelId, topic, 3)
-        if (results.length) { video = results[0]; usedChannel = ch.title; break }
+        const match = results.find((r) => isRelevant(r, topic))
+        if (match) { video = match; usedChannel = ch.title; break }
       } catch { /* try the next tagged channel */ }
     }
 
@@ -61,9 +96,9 @@ export async function POST(request) {
       fromTaggedChannel = false
       const gradeQualifier = gradeLevel ? ` grade ${gradeLevel}` : ''
       const results = await searchYouTubeForTopic(`${topic} ${subject}${gradeQualifier} for kids educational`, 3)
-      video = results[0] || null
+      video = results.find((r) => isRelevant(r, topic)) || null
     }
-    if (!video) return Response.json({ error: `No relevant video found for "${topic}"` }, { status: 404 })
+    if (!video) return Response.json({ error: `No genuinely relevant video found for "${topic}" -- tagged channels and general search both came back empty or off-topic. Consider tagging a channel that actually covers this topic.` }, { status: 404 })
 
     // Step 4: generate questions grounded in the video's REAL title and
     // description only -- explicitly told not to invent transcript
